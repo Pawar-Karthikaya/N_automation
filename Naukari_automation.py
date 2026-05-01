@@ -16,10 +16,10 @@ PASSWORD = os.environ.get("NAUKRI_PASSWORD")
 
 STATE_FILE = "naukri_state.json"
 
-SUMMARY_V1 = """Python Full Stack Developer | Django & React | AWS & Microservices
+SUMMARY_V1 = """Python Full Stack Developer | Django & React | AWS & Microservices | yyyyyyyyyyyyyyyyyy
 Detail-oriented Full Stack Developer with 6 months of experience in designing, developing, and deploying scalable web applications using the Python ecosystem. Expert in building robust back-end systems with Django and FastAPI, integrated with modern front-end frameworks like React.js."""
 
-SUMMARY_V2 = """Python Full Stack Developer | Django, React & AWS
+SUMMARY_V2 = """Python Full Stack Developer | Django, React & AWS | yyyyyyyyyyyyyyyyyyy
 Results-driven Full Stack Developer with 6 months of hands-on experience building and deploying scalable web applications using Python. Proficient in back-end development with Django and FastAPI, and front-end development with React.js and modern UI frameworks."""
 
 
