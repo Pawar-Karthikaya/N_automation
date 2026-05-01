@@ -38,9 +38,12 @@ jobs:
         run: |
           python Naukari_automation.py
 
-      - name: Upload screenshot if error
-        if: failure()
+      - name: Upload screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: error-screenshot
-          path: naukri_error.png
+          name: screenshots
+          path: | 
+            naukri_error.png
+            login_page.png
+          if-no-files-found: warn
