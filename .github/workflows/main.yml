@@ -32,9 +32,6 @@ jobs:
           pip install selenium webdriver-manager
 
       - name: Run Naukri script
-        env:
-          NAUKRI_EMAIL: ${{ secrets.NAUKRI_EMAIL }}
-          NAUKRI_PASSWORD: ${{ secrets.NAUKRI_PASSWORD }}
         run: |
           python Naukari_automation.py
 
