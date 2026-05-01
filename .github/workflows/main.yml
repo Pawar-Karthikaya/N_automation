@@ -36,7 +36,7 @@ jobs:
           NAUKRI_EMAIL: ${{ secrets.NAUKRI_EMAIL }}
           NAUKRI_PASSWORD: ${{ secrets.NAUKRI_PASSWORD }}
         run: |
-          python Naukri_automation.py
+          python Naukari_automation.py
 
       - name: Upload screenshot if error
         if: failure()
