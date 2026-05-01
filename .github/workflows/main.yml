@@ -2,12 +2,12 @@ name: Naukri Profile Updater
 
 on:
   schedule:
-    - cron: '30 3 * * *'   # 9:00 AM IST
-    - cron: '15 6 * * *'   # 11:45 AM IST
-    - cron: '0 9 * * *'    # 2:30 PM IST
-    - cron: '45 11 * * *'  # 5:15 PM IST
-    - cron: '30 14 * * *'  # 8:00 PM IST
-  workflow_dispatch:        # allows manual trigger too
+    - cron: '30 3 * * *'    # 9:00 AM IST
+    - cron: '15 6 * * *'    # 11:45 AM IST
+    - cron: '0 9 * * *'     # 2:30 PM IST
+    - cron: '45 11 * * *'   # 5:15 PM IST
+    - cron: '30 14 * * *'   # 8:00 PM IST
+  workflow_dispatch:         # manual trigger
 
 jobs:
   update-profile:
@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -31,6 +31,9 @@ jobs:
         run: |
           pip install selenium webdriver-manager
 
+      - name: List files (debug)
+        run: ls -la
+
       - name: Run Naukri script
         run: |
           python Naukari_automation.py
@@ -40,7 +43,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: | 
-            naukri_error.png
-            login_page.png
+          path: "*.png"
           if-no-files-found: warn
