@@ -11,8 +11,8 @@ import json
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-EMAIL = os.environ.get("NAUKRI_EMAIL")
-PASSWORD = os.environ.get("NAUKRI_PASSWORD")
+EMAIL = "karthikayapawar114@gmail.com"
+PASSWORD = "Naukari_Password@2026"
 
 STATE_FILE = "naukri_state.json"
 
