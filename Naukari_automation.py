@@ -11,15 +11,16 @@ import json
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
+# ✅ Read from environment variables (GitHub Secrets)
 EMAIL = "karthikayapawar114@gmail.com"
 PASSWORD = "Naukari_Password@2026"
 
 STATE_FILE = "naukri_state.json"
 
-SUMMARY_V1 = """Python Full Stack Developer | Django & React | AWS & Microservices | yyyyyyyyyyyyyyyyyy
+SUMMARY_V1 = """Python Full Stack Developer | Django & React | AWS & Microservices
 Detail-oriented Full Stack Developer with 6 months of experience in designing, developing, and deploying scalable web applications using the Python ecosystem. Expert in building robust back-end systems with Django and FastAPI, integrated with modern front-end frameworks like React.js."""
 
-SUMMARY_V2 = """Python Full Stack Developer | Django, React & AWS | yyyyyyyyyyyyyyyyyyy
+SUMMARY_V2 = """Python Full Stack Developer | Django, React & AWS
 Results-driven Full Stack Developer with 6 months of hands-on experience building and deploying scalable web applications using Python. Proficient in back-end development with Django and FastAPI, and front-end development with React.js and modern UI frameworks."""
 
 
@@ -31,12 +32,8 @@ def get_next_summary():
     except (FileNotFoundError, json.JSONDecodeError):
         last = 2
 
-    if last == 1:
-        next_version = 2
-        summary = SUMMARY_V2
-    else:
-        next_version = 1
-        summary = SUMMARY_V1
+    next_version = 2 if last == 1 else 1
+    summary = SUMMARY_V2 if last == 1 else SUMMARY_V1
 
     with open(STATE_FILE, "w") as f:
         json.dump({"last_version": next_version}, f)
@@ -53,6 +50,9 @@ def update_naukri_profile():
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--allow-running-insecure-content")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument(
@@ -65,32 +65,77 @@ def update_naukri_profile():
         service=Service(ChromeDriverManager().install()),
         options=options
     )
-    wait = WebDriverWait(driver, 20)
+
+    # ✅ Hide webdriver flag from Naukri's bot detection
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+        "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+    })
+
+    wait = WebDriverWait(driver, 30)
 
     try:
+        # ✅ Verify secrets loaded
+        if not EMAIL or not PASSWORD:
+            raise Exception("❌ EMAIL or PASSWORD env variable is missing!")
+        logging.info(f"✅ Credentials loaded | Email: {EMAIL[:6]}***")
+
         new_summary = get_next_summary()
 
         # ── LOGIN ──────────────────────────────────────────────
-        logging.info("🔐 Logging in...")
+        logging.info("🔐 Opening Naukri login page...")
         driver.get("https://www.naukri.com/nlogin/login")
-        time.sleep(3)
-
-        wait.until(EC.presence_of_element_located((By.ID, "usernameField"))).send_keys(EMAIL)
-        time.sleep(0.5)
-        driver.find_element(By.ID, "passwordField").send_keys(PASSWORD)
-        time.sleep(0.5)
-        driver.find_element(By.XPATH, "//button[@type='submit']").click()
         time.sleep(5)
 
-        # Wait until URL actually leaves login page
+        # ✅ Debug screenshot before login
+        driver.save_screenshot("login_page.png")
+        logging.info(f"📸 Page title: {driver.title}")
+        logging.info(f"🌐 Current URL: {driver.current_url}")
+
+        # ✅ Find email field
+        logging.info("🔍 Looking for email field...")
+        try:
+            email_field = wait.until(EC.presence_of_element_located((By.ID, "usernameField")))
+        except:
+            email_field = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@type='text' or @type='email']")))
+        
+        email_field.clear()
+        email_field.send_keys(EMAIL)
+        logging.info("✅ Email entered")
+        time.sleep(1)
+
+        # ✅ Find password field
+        try:
+            pwd_field = driver.find_element(By.ID, "passwordField")
+        except:
+            pwd_field = driver.find_element(By.XPATH, "//input[@type='password']")
+        
+        pwd_field.clear()
+        pwd_field.send_keys(PASSWORD)
+        logging.info("✅ Password entered")
+        time.sleep(1)
+
+        # ✅ Click login
+        try:
+            login_btn = driver.find_element(By.XPATH, "//button[@type='submit']")
+        except:
+            login_btn = driver.find_element(By.XPATH, "//button[contains(text(),'Login')]")
+        
+        driver.execute_script("arguments[0].click();", login_btn)
+        logging.info("✅ Login button clicked")
+        time.sleep(6)
+
+        # ✅ Screenshot after login attempt
+        driver.save_screenshot("after_login.png")
+        logging.info(f"🌐 URL after login: {driver.current_url}")
+
+        # ✅ Wait until redirected away from login page
         wait.until(lambda d: "nlogin" not in d.current_url)
-        logging.info(f"✅ Logged in | URL: {driver.current_url}")
+        logging.info(f"✅ Logged in successfully | URL: {driver.current_url}")
 
         # ── PROFILE PAGE ───────────────────────────────────────
         driver.get("https://www.naukri.com/mnjuser/profile")
-        time.sleep(4)
-
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "profileSummary")))
+        time.sleep(5)
+        driver.save_screenshot("profile_page.png")
         logging.info("✅ Profile page loaded")
 
         # ── FIND EDIT BUTTON ───────────────────────────────────
@@ -99,6 +144,7 @@ def update_naukri_profile():
             "//div[contains(@class,'profileSummary')]//span[contains(@class,'edit')]",
             "//div[contains(@class,'profileSummary')]//button",
             "//section[contains(@class,'summary')]//img[contains(@alt,'edit')]/..",
+            "//div[contains(@class,'summary')]//span[@class='edit']",
         ]
 
         edit_icon = None
@@ -107,16 +153,17 @@ def update_naukri_profile():
                 edit_icon = WebDriverWait(driver, 5).until(
                     EC.element_to_be_clickable((By.XPATH, xpath))
                 )
-                logging.info(f"✅ Found edit button with: {xpath}")
+                logging.info(f"✅ Found edit button: {xpath}")
                 break
             except:
                 logging.info(f"⚠️ Not found: {xpath}")
 
         if not edit_icon:
+            driver.save_screenshot("edit_button_error.png")
             raise Exception("Could not find profile summary edit button")
 
         driver.execute_script("arguments[0].click();", edit_icon)
-        time.sleep(2)
+        time.sleep(3)
 
         # ── FIND TEXTAREA ──────────────────────────────────────
         textarea_xpaths = [
@@ -133,18 +180,19 @@ def update_naukri_profile():
                 summary_box = WebDriverWait(driver, 5).until(
                     EC.presence_of_element_located((By.XPATH, xpath))
                 )
-                logging.info(f"✅ Found textarea with: {xpath}")
+                logging.info(f"✅ Found textarea: {xpath}")
                 break
             except:
                 logging.info(f"⚠️ Textarea not found: {xpath}")
 
         if not summary_box:
+            driver.save_screenshot("textarea_error.png")
             raise Exception("Could not find summary textarea")
 
         # ── TYPE NEW SUMMARY ───────────────────────────────────
         driver.execute_script("arguments[0].value = '';", summary_box)
         summary_box.click()
-        time.sleep(0.3)
+        time.sleep(0.5)
 
         for chunk in [new_summary[i:i+100] for i in range(0, len(new_summary), 100)]:
             summary_box.send_keys(chunk)
@@ -160,11 +208,11 @@ def update_naukri_profile():
         ))
         driver.execute_script("arguments[0].click();", save_btn)
         time.sleep(3)
+        driver.save_screenshot("after_save.png")
         logging.info("✅ Profile Summary updated successfully!")
 
     except Exception as e:
         logging.error(f"❌ Error: {e}")
-        # Save screenshot for debugging
         try:
             driver.save_screenshot("naukri_error.png")
             logging.info("📸 Screenshot saved: naukri_error.png")
@@ -172,7 +220,6 @@ def update_naukri_profile():
             pass
     finally:
         driver.quit()
-    
 
 
 if __name__ == "__main__":
