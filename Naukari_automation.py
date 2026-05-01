@@ -161,8 +161,18 @@ def update_naukri_profile():
         driver.execute_script("arguments[0].click();", save_btn)
         time.sleep(3)
         logging.info("✅ Profile Summary updated successfully!")
+
+    except Exception as e:
+        logging.error(f"❌ Error: {e}")
+        # Save screenshot for debugging
+        try:
+            driver.save_screenshot("naukri_error.png")
+            logging.info("📸 Screenshot saved: naukri_error.png")
+        except:
+            pass
     finally:
         driver.quit()
+    
 
 
 if __name__ == "__main__":
